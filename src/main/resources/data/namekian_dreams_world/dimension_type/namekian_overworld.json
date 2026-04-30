@@ -13,10 +13,13 @@
   "height": 1328,
   "logical_height": 1328,
   "infiniburn": "#minecraft:infiniburn_overworld",
-  "effects": "minecraft:overworld",
+  "effects": "namekian_dreams_world:namekian_overworld",
   "monster_spawn_light_level": {
     "type": "minecraft:uniform",
-    "value": { "min_inclusive": 0, "max_inclusive": 7 }
+    "value": {
+      "min_inclusive": 0,
+      "max_inclusive": 7
+    }
   },
   "monster_spawn_block_light_limit": 0
 }

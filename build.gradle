@@ -8,7 +8,15 @@ group = project.maven_group
 
 base { archivesName = project.archives_base_name }
 
-loom { splitEnvironmentSourceSets() }
+loom {
+    splitEnvironmentSourceSets()
+    mods {
+        "namekian_dreams_world" {
+            sourceSet sourceSets.main
+            sourceSet sourceSets.client
+        }
+    }
+}
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -39,4 +47,12 @@ tasks.register('diagnoseFields', JavaExec) {
     description = 'Samples Namekian Dreams density fields and prints terrain regime evidence.'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'io.github.namekiandreams.worldgen.FieldDiagnostics'
+}
+
+
+tasks.register('diagnoseOres', JavaExec) {
+    group = 'verification'
+    description = 'Samples Namekian Dreams ore fields and prints vertical/megavein evidence.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'io.github.namekiandreams.worldgen.ore.OreDiagnostics'
 }

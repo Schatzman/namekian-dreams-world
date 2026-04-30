@@ -4,6 +4,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.github.namekiandreams.NamekianDreamsWorld;
 import io.github.namekiandreams.config.NamekianDreamsConfig;
+import io.github.namekiandreams.worldgen.ore.NamekianOreSampler;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -49,7 +50,9 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     public CompletableFuture<ChunkAccess> fillFromNoise(Executor executor, Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
         return CompletableFuture.supplyAsync(() -> {
             NamekianDreamsConfig config = NamekianDreamsWorld.CONFIG.validate();
-            NamekianDensitySampler sampler = new NamekianDensitySampler(config, terrainSeed(randomState));
+            long seed = terrainSeed(randomState);
+            NamekianDensitySampler sampler = new NamekianDensitySampler(config, seed);
+            NamekianOreSampler oreSampler = new NamekianOreSampler(config, seed);
             ChunkPos chunkPos = chunk.getPos();
             BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
             for (int localX = 0; localX < 16; localX++) {
@@ -59,7 +62,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
                     boolean topMarked = false;
                     for (int y = config.maxY(); y >= config.minY(); y--) {
                         pos.set(blockX, y, blockZ);
-                        BlockState state = stateFor(config, sampler, blockX, y, blockZ, topMarked);
+                        BlockState state = stateFor(config, sampler, oreSampler, blockX, y, blockZ, topMarked);
                         if (!state.isAir() && state != WATER) topMarked = true;
                         chunk.setBlockState(pos, state, false);
                     }
@@ -78,12 +81,13 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
                 .nextLong();
     }
 
-    private static BlockState stateFor(NamekianDreamsConfig config, NamekianDensitySampler sampler, int x, int y, int z, boolean topAlreadyMarked) {
+    private static BlockState stateFor(NamekianDreamsConfig config, NamekianDensitySampler sampler, NamekianOreSampler oreSampler, int x, int y, int z, boolean topAlreadyMarked) {
         if (y <= config.bedrockTopY()) return BEDROCK;
         if (sampler.isSolid(x, y, z)) {
             if (!topAlreadyMarked && y > config.seaLevel() - 6) return GRASS;
             if (y > config.seaLevel() - 12 && y < config.seaLevel() + 24) return DIRT;
-            return y < -64 ? DEEPSLATE : STONE;
+            BlockState base = y < -64 ? DEEPSLATE : STONE;
+            return oreSampler.replaceIfOre(base, x, y, z);
         }
         return y <= config.seaLevel() ? WATER : AIR;
     }
@@ -99,11 +103,13 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     @Override
     public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
         NamekianDreamsConfig config = NamekianDreamsWorld.CONFIG.validate();
-        NamekianDensitySampler sampler = new NamekianDensitySampler(config, terrainSeed(randomState));
+        long seed = terrainSeed(randomState);
+        NamekianDensitySampler sampler = new NamekianDensitySampler(config, seed);
+        NamekianOreSampler oreSampler = new NamekianOreSampler(config, seed);
         BlockState[] states = new BlockState[config.height()];
         for (int i = 0; i < states.length; i++) {
             int y = config.minY() + i;
-            states[i] = stateFor(config, sampler, x, y, z, y < config.maxY() && sampler.isSolid(x, y + 1, z));
+            states[i] = stateFor(config, sampler, oreSampler, x, y, z, y < config.maxY() && sampler.isSolid(x, y + 1, z));
         }
         return new NoiseColumn(config.minY(), states);
     }
@@ -133,5 +139,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
         lines.add("Namekian density: " + Mth.floor(sample.density() * 1000.0) / 1000.0);
         lines.add("Namekian regime: " + sample.regime());
         lines.add("Namekian range: " + config.minY() + ".." + config.maxY());
+        lines.add("Namekian daylight offset: " + config.outdoorSkyLightOffset() + " max=" + config.maxSkyLightLevel());
+        lines.add("Namekian ores: multiplier=" + config.globalOreMultiplier() + " megaveins=" + config.enableMegaveins());
     }
 }

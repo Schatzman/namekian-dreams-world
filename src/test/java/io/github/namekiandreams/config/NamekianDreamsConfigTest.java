@@ -2,6 +2,7 @@ package io.github.namekiandreams.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 
 class NamekianDreamsConfigTest {
@@ -14,6 +15,20 @@ class NamekianDreamsConfigTest {
         assertEquals(-300, config.bedrockTopY());
     }
     @Test
+    void defaultsExposeAtmosphereDaylightAndOreKeys() {
+        NamekianDreamsConfig config = NamekianDreamsConfig.defaults();
+        assertEquals("#3F9678", config.skyColor());
+        assertEquals("#4FAE8A", config.fogColor());
+        assertEquals("#24584F", config.waterFogColor());
+        assertEquals("#A7D9BF", config.cloudColor());
+        assertEquals(-5, config.outdoorSkyLightOffset());
+        assertEquals(10, config.maxSkyLightLevel());
+        assertTrue(config.enableVisualDaylightDimming());
+        assertTrue(config.enableMegaveins());
+        assertTrue(config.globalOreMultiplier() > 1.0);
+    }
+
+    @Test
     void validationRejectsInvalidRange() {
         NamekianDreamsConfig config = NamekianDreamsConfig.defaults();
         assertThrows(IllegalArgumentException.class, () -> new NamekianDreamsConfig(
@@ -21,6 +36,12 @@ class NamekianDreamsConfigTest {
                 config.extremeAmplitude(), config.amplificationMaskFrequency(), config.caveFrequency(),
                 config.caveAmplitude(), config.caveThreshold(), config.fractalStrength(), config.fractalScale(),
                 config.fractalRegionFrequency(), config.fractalQuality(), config.domainWarpStrength(),
-                config.performanceQualityPreset()).validate());
+                config.performanceQualityPreset(), config.skyColor(), config.fogColor(), config.waterFogColor(), config.cloudColor(),
+                config.enableActualSkyLightOffset(), config.outdoorSkyLightOffset(), config.maxSkyLightLevel(),
+                config.enableVisualDaylightDimming(), config.visualDaylightMultiplier(), config.globalOreMultiplier(),
+                config.globalVeinSizeMultiplier(), config.globalVeinsPerChunkMultiplier(), config.enableMegaveins(),
+                config.megaveinRarity(), config.megaveinMaxRadius(), config.megaveinVerticalSpan(),
+                config.allowOresAboveVanillaHeight(), config.allowOresBelowVanillaDepth(), config.allowHighMountainOres(),
+                config.allowDeepLavaOreZones()).validate());
     }
 }
