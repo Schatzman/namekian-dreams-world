@@ -23,6 +23,9 @@ public final class OreDiagnostics {
         boolean aboveVanillaBuildHeight = false;
         boolean boostedOrePresent = false;
         boolean megaveinCandidate = false;
+        Coordinate belowVanillaCoordinate = null;
+        Coordinate aboveVanillaCoordinate = null;
+        Coordinate megaveinCoordinate = null;
         int oreCount = 0;
         int samples = 0;
         for (int x = -2048; x <= 2048; x += 37) {
@@ -34,28 +37,52 @@ public final class OreDiagnostics {
                     samples++;
                     if (ore) {
                         oreCount++;
-                        belowVanillaBedrock |= y < -64;
-                        aboveVanillaBuildHeight |= y > 320;
+                        if (y < -64) {
+                            belowVanillaBedrock = true;
+                            if (belowVanillaCoordinate == null) belowVanillaCoordinate = new Coordinate(x, y, z, replacement.getBlock().toString());
+                        }
+                        if (y > 320) {
+                            aboveVanillaBuildHeight = true;
+                            if (aboveVanillaCoordinate == null) aboveVanillaCoordinate = new Coordinate(x, y, z, replacement.getBlock().toString());
+                        }
                         boostedOrePresent = true;
                     }
-                    megaveinCandidate |= sampler.isMegaveinCandidate(x, y, z);
+                    if (sampler.isMegaveinCandidate(x, y, z)) {
+                        megaveinCandidate = true;
+                        if (megaveinCoordinate == null) megaveinCoordinate = new Coordinate(x, y, z, "megavein_candidate");
+                    }
                 }
             }
         }
-        return new DiagnosticResult(samples, oreCount, belowVanillaBedrock, aboveVanillaBuildHeight, boostedOrePresent, megaveinCandidate);
+        return new DiagnosticResult(samples, oreCount, belowVanillaBedrock, aboveVanillaBuildHeight, boostedOrePresent,
+                megaveinCandidate, belowVanillaCoordinate, aboveVanillaCoordinate, megaveinCoordinate);
+    }
+
+    public record Coordinate(int x, int y, int z, String signal) {
+        public String command() { return "/tp @p " + x + " " + y + " " + z + " (" + signal + ")"; }
     }
 
     public record DiagnosticResult(int samples, int oreCount, boolean belowVanillaBedrock, boolean aboveVanillaBuildHeight,
-                                   boolean boostedOrePresent, boolean megaveinCandidatePresent) {
+                                   boolean boostedOrePresent, boolean megaveinCandidatePresent,
+                                   Coordinate belowVanillaCoordinate, Coordinate aboveVanillaCoordinate,
+                                   Coordinate megaveinCoordinate) {
         public boolean acceptancePassed() {
-            return samples > 0 && oreCount > 0 && belowVanillaBedrock && aboveVanillaBuildHeight && boostedOrePresent && megaveinCandidatePresent;
+            return samples > 0 && oreCount > 0 && belowVanillaBedrock && aboveVanillaBuildHeight && boostedOrePresent
+                    && megaveinCandidatePresent && belowVanillaCoordinate != null && aboveVanillaCoordinate != null
+                    && megaveinCoordinate != null;
         }
         public String toReport() {
             return "Namekian Dreams ore diagnostic: samples=" + samples + ", ore_count=" + oreCount
                     + ", below_vanilla_bedrock=" + belowVanillaBedrock
                     + ", above_vanilla_build_height=" + aboveVanillaBuildHeight
                     + ", boosted_ore_present=" + boostedOrePresent
-                    + ", megavein_candidate_present=" + megaveinCandidatePresent;
+                    + ", megavein_candidate_present=" + megaveinCandidatePresent
+                    + ", deep_ore=" + format(belowVanillaCoordinate)
+                    + ", high_ore=" + format(aboveVanillaCoordinate)
+                    + ", megavein=" + format(megaveinCoordinate);
+        }
+        private static String format(Coordinate coordinate) {
+            return coordinate == null ? "none" : coordinate.command();
         }
     }
 }

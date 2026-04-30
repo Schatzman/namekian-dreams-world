@@ -22,7 +22,7 @@ public final class NamekianDreamsWorldClient implements ClientModInitializer {
         @Override
         public Vec3 getBrightnessDependentFogColor(Vec3 baseFogColor, float sunHeight) {
             NamekianDreamsConfig config = NamekianDreamsWorld.CONFIG;
-            Vec3 fog = color(config.fogColor());
+            Vec3 fog = NamekianClientColors.color(config.fogColor());
             double dim = NamekianDaylightOffset.visualDaylightMultiplier(config);
             double brightness = 0.55 + Math.max(0.0F, sunHeight) * 0.45;
             return fog.scale(dim * brightness);
@@ -31,11 +31,6 @@ public final class NamekianDreamsWorldClient implements ClientModInitializer {
         @Override
         public boolean isFoggyAt(int x, int z) {
             return false;
-        }
-
-        private static Vec3 color(String hex) {
-            int rgb = Integer.parseInt(hex.substring(1), 16);
-            return new Vec3(((rgb >> 16) & 255) / 255.0, ((rgb >> 8) & 255) / 255.0, (rgb & 255) / 255.0);
         }
     }
 }

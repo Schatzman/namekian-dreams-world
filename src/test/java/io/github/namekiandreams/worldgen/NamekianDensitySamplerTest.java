@@ -42,6 +42,8 @@ class NamekianDensitySamplerTest {
 
         assertTrue(preset.contains("namekian_dreams_world:namekian_chunk_generator"));
         assertTrue(preset.contains("minecraft:overworld"));
+        assertTrue(preset.contains("minecraft:multi_noise"));
+        assertTrue(!preset.contains("minecraft:fixed"));
         assertTrue(!preset.contains("\"seed\""));
     }
 
@@ -49,5 +51,20 @@ class NamekianDensitySamplerTest {
     void diagnosticSeesRequiredSignals() {
         FieldDiagnostics.DiagnosticResult result = FieldDiagnostics.run(NamekianDreamsConfig.defaults(), 8675309L);
         assertTrue(result.acceptancePassed(), result.toReport());
+        assertTrue(result.waterCoordinate() != null, result.toReport());
+        assertTrue(result.mountainCoordinate() != null, result.toReport());
+        assertTrue(result.caveCoordinate() != null, result.toReport());
+        assertTrue(result.highColumns() > 0 && result.lowColumns() > 0 && result.midColumns() > 0, result.toReport());
+    }
+
+    @Test
+    void generatedColumnsIncludeWaterMountainsAndCaveAir() {
+        NamekianDreamsConfig config = NamekianDreamsConfig.defaults();
+        NamekianDensitySampler sampler = new NamekianDensitySampler(config, 8675309L);
+        FieldDiagnostics.DiagnosticResult result = FieldDiagnostics.run(config, 8675309L);
+
+        assertTrue(sampler.surfaceHeight(result.waterCoordinate().x(), result.waterCoordinate().z()) < config.seaLevel());
+        assertTrue(sampler.surfaceHeight(result.mountainCoordinate().x(), result.mountainCoordinate().z()) > 320);
+        assertTrue(sampler.isCaveAir(result.caveCoordinate().x(), result.caveCoordinate().y(), result.caveCoordinate().z()));
     }
 }

@@ -18,33 +18,69 @@ public final class NamekianDensitySampler {
         double wx = x + warpX;
         double wz = z + warpZ;
         double continent = octave2D(seed + 101, wx, wz, 0.00042, 4, 0.55);
-        double uplift = FieldMath.smoothstep(-0.38, 0.78, continent);
+        double uplift = FieldMath.smoothstep(-0.48, 0.82, continent);
+        double oceanMask = FieldMath.smoothstep(-0.18, -0.62, continent);
+        double basinMask = FieldMath.smoothstep(0.52, 0.94,
+                (octave2D(seed + 137, wx - 700.0, wz + 350.0, 0.00105, 3, 0.54) * 0.5 + 0.5)) * oceanMask;
         double amplificationMask = FieldMath.smoothstep(0.08, 0.92,
                 octave2D(seed + 151, wx, wz, config.amplificationMaskFrequency(), 3, 0.50) * 0.5 + 0.5);
-        double extremeMask = FieldMath.smoothstep(0.62, 0.96, amplificationMask);
+        double extremeMask = FieldMath.smoothstep(0.58, 0.94, amplificationMask);
         double amplitude = FieldMath.lerp(amplificationMask, config.normalAmplitude(), config.amplifiedAmplitude());
         amplitude = FieldMath.lerp(extremeMask, amplitude, config.extremeAmplitude());
         double mountain = Math.abs(octave2D(seed + 211, wx, wz, 0.00175, 5, 0.50));
-        double ridges = Math.pow(1.0 - FieldMath.clamp(mountain, 0.0, 1.0), 2.15);
-        double detail = octave2D(seed + 307, wx, wz, 0.012, 4, 0.48) * 18.0;
-        double targetHeight = config.seaLevel() - 22.0 + uplift * amplitude + ridges * amplitude * 0.42 + detail;
-        double verticalDensity = (targetHeight - y) / 58.0;
-        double caveSignal = caveSignal(wx, y, wz);
+        double ridges = Math.pow(1.0 - FieldMath.clamp(mountain, 0.0, 1.0), 2.05);
+        double ridgeLift = ridges * amplitude * (0.46 + extremeMask * 0.28);
+        double detail = octave2D(seed + 307, wx, wz, 0.012, 4, 0.48) * 22.0;
+        double basinCut = (oceanMask * 86.0) + (basinMask * 70.0);
+        double targetHeight = config.seaLevel() - 18.0 + uplift * amplitude + ridgeLift + detail - basinCut;
+        double verticalDensity = (targetHeight - y) / 56.0;
+        double caveSignal = caveSignal(wx, y, wz, targetHeight);
         double fractal = fractalContribution(wx, y, wz, extremeMask);
         TerrainRegime regime = extremeMask > 0.45 ? TerrainRegime.EXTREME : amplificationMask > 0.45 ? TerrainRegime.AMPLIFIED : TerrainRegime.NORMAL;
-        return new DensitySample(verticalDensity + caveSignal + fractal, caveSignal, fractal, amplificationMask, extremeMask, targetHeight, regime);
+        return new DensitySample(verticalDensity + caveSignal + fractal, caveSignal, fractal, amplificationMask, extremeMask, targetHeight, oceanMask, basinMask, regime);
     }
 
     public boolean isSolid(double x, double y, double z) {
-        return y <= config.bedrockTopY() || sample(x, y, z).density() > 0.0;
+        if (y <= config.bedrockTopY()) return true;
+        if (isCaveAir(x, y, z)) return false;
+        return sample(x, y, z).density() > 0.0;
     }
 
-    private double caveSignal(double x, double y, double z) {
+    public boolean isCaveAir(double x, double y, double z) {
+        if (y <= config.bedrockTopY() + 4 || y >= config.maxY() - 4) return false;
+        DensitySample sample = sample(x, y, z);
+        double buriedDepth = sample.targetHeight() - y;
+        if (buriedDepth < 10.0) return false;
+        return sample.caveSignal() < -1.15 || shaftSignal(x, z) > 0.82;
+    }
+
+    public boolean isOpenWaterColumn(double x, double z) {
+        return surfaceHeight(x, z) < config.seaLevel() - 2;
+    }
+
+    public int surfaceHeight(double x, double z) {
+        for (int y = config.maxY(); y >= config.minY(); y--) {
+            if (isSolid(x, y, z)) return y;
+        }
+        return config.minY();
+    }
+
+    private double caveSignal(double x, double y, double z, double targetHeight) {
         double tunnels = Math.abs(FieldMath.valueNoise3D(seed + 401, x, y * 0.72, z, config.caveFrequency()));
-        double chambers = Math.abs(FieldMath.valueNoise3D(seed + 409, x + 400.0, y, z - 200.0, config.caveFrequency() * 0.42));
-        double voidMask = FieldMath.smoothstep(config.caveThreshold(), 1.0, Math.max(tunnels, chambers));
-        double depthBoost = FieldMath.smoothstep(config.seaLevel() + 30.0, config.minY() + 32.0, y);
-        return -voidMask * config.caveAmplitude() * (0.72 + depthBoost * 0.55);
+        double chambers = Math.abs(FieldMath.valueNoise3D(seed + 409, x + 400.0, y, z - 200.0, config.caveFrequency() * 0.36));
+        double fracture = Math.abs(FieldMath.valueNoise3D(seed + 419, x - 150.0, y * 1.35, z + 90.0, config.caveFrequency() * 1.85));
+        double tunnelMask = FieldMath.smoothstep(config.caveThreshold(), 0.92, Math.max(tunnels, fracture));
+        double chamberMask = FieldMath.smoothstep(config.caveThreshold() * 0.82, 0.82, chambers);
+        double depthBoost = FieldMath.smoothstep(config.seaLevel() + 42.0, config.minY() + 36.0, y);
+        double buriedBoost = FieldMath.smoothstep(18.0, 160.0, targetHeight - y);
+        double voidMask = FieldMath.clamp(Math.max(tunnelMask, chamberMask * 1.18), 0.0, 1.0);
+        return -voidMask * config.caveAmplitude() * (4.2 + depthBoost * 5.8 + buriedBoost * 3.2);
+    }
+
+    private double shaftSignal(double x, double z) {
+        double broad = Math.abs(FieldMath.valueNoise2D(seed + 431, x, z, 0.0065));
+        double tight = Math.abs(FieldMath.valueNoise2D(seed + 433, x + 71.0, z - 39.0, 0.021));
+        return FieldMath.smoothstep(0.58, 0.92, Math.max(broad, tight));
     }
 
     private double fractalContribution(double x, double y, double z, double extremeMask) {
@@ -99,5 +135,7 @@ public final class NamekianDensitySampler {
     }
 
     public enum TerrainRegime { NORMAL, AMPLIFIED, EXTREME }
-    public record DensitySample(double density, double caveSignal, double fractalContribution, double amplificationMask, double extremeMask, double targetHeight, TerrainRegime regime) {}
+    public record DensitySample(double density, double caveSignal, double fractalContribution, double amplificationMask,
+                                double extremeMask, double targetHeight, double oceanMask, double basinMask,
+                                TerrainRegime regime) {}
 }

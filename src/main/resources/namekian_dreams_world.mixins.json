@@ -1,0 +1,15 @@
+{
+  "required": true,
+  "package": "io.github.namekiandreams.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": [
+    "NamekianSkyLightMixin"
+  ],
+  "client": [
+    "NamekianClientAtmosphereMixin",
+    "NamekianWaterFogMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

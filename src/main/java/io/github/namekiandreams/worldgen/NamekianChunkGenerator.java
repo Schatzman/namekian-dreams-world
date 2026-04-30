@@ -83,6 +83,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
 
     private static BlockState stateFor(NamekianDreamsConfig config, NamekianDensitySampler sampler, NamekianOreSampler oreSampler, int x, int y, int z, boolean topAlreadyMarked) {
         if (y <= config.bedrockTopY()) return BEDROCK;
+        if (sampler.isCaveAir(x, y, z)) return AIR;
         if (sampler.isSolid(x, y, z)) {
             if (!topAlreadyMarked && y > config.seaLevel() - 6) return GRASS;
             if (y > config.seaLevel() - 12 && y < config.seaLevel() + 24) return DIRT;

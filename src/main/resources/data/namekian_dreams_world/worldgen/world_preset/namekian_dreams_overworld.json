@@ -4,7 +4,7 @@
       "type": "namekian_dreams_world:namekian_overworld",
       "generator": {
         "type": "namekian_dreams_world:namekian_chunk_generator",
-        "biome_source": { "type": "minecraft:fixed", "biome": "minecraft:plains" }
+        "biome_source": { "type": "minecraft:multi_noise", "preset": "minecraft:overworld" }
       }
     },
     "minecraft:the_nether": {

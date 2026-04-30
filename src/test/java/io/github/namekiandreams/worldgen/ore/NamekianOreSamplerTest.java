@@ -46,5 +46,8 @@ class NamekianOreSamplerTest {
         assertTrue(result.belowVanillaBedrock());
         assertTrue(result.aboveVanillaBuildHeight());
         assertTrue(result.megaveinCandidatePresent());
+        assertTrue(result.belowVanillaCoordinate() != null, result.toReport());
+        assertTrue(result.aboveVanillaCoordinate() != null, result.toReport());
+        assertTrue(result.megaveinCoordinate() != null, result.toReport());
     }
 }
