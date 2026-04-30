@@ -5,3 +5,8 @@
 /.idea/
 *.iml
 .DS_Store
+
+# Runtime generated output
+logs/
+
+run/
