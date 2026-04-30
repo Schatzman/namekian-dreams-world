@@ -19,9 +19,9 @@ The field diagnostic samples deterministic terrain fields and reports whether no
 
 ## Atmosphere And Daylight
 
-The Namekian dimension type uses `effects: namekian_dreams_world:namekian_overworld`, registered on the client through Fabric's `DimensionRenderingRegistry`. Defaults are `sky_color=#3F9678`, `fog_color=#4FAE8A`, `water_fog_color=#24584F`, and `cloud_color=#A7D9BF`; the compile-safe client implementation applies the custom fog color and visual daylight dimming through the dimension effects path.
+The Namekian dimension type uses `effects: namekian_dreams_world:namekian_overworld`, registered on the client through Fabric's `DimensionRenderingRegistry`. Defaults are `sky_color=#3F9678`, `fog_color=#4FAE8A`, `water_fog_color=#24584F`, and `cloud_color=#A7D9BF`; client-only mixins force sky/cloud colors for Namekian-dimension clients and force configured water fog while the camera is in water.
 
-Actual gameplay skylight offset is represented by tested config/math (`enable_actual_sky_light_offset=true`, `outdoor_sky_light_offset=-5`, `max_sky_light_level=10`), where outdoor sky light `15 -> 10` and intermediate values subtract five with clamp. A runtime mixin that changes server/client `LevelLightEngine` brightness is not installed in this slice because the safe scope requires world/dimension identity at the light-engine query site; the vanilla 1.20.1 `LevelLightEngine#getRawBrightness` target does not retain a `Level`/dimension reference, so a direct mixin there would risk affecting non-Namekian dimensions.
+Actual gameplay skylight offset is represented by tested config/math (`enable_actual_sky_light_offset=true`, `outdoor_sky_light_offset=-5`, `max_sky_light_level=10`), where outdoor sky light `15 -> 10` and intermediate values subtract five with clamp. No runtime gameplay skylight mixin is installed: the attempted `BlockAndTintGetter` mixin was removed because the target is an interface and failed client mixin preparation. A future gameplay-light implementation needs a compile/runtime-safe target with reliable `Level`/dimension identity before changing sky light.
 
 ## Ore Generation
 
