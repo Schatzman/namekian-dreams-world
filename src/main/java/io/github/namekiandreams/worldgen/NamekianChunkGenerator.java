@@ -27,8 +27,7 @@ import net.minecraft.world.level.levelgen.blending.Blender;
 
 public final class NamekianChunkGenerator extends ChunkGenerator {
     public static final Codec<NamekianChunkGenerator> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            BiomeSource.CODEC.fieldOf("biome_source").forGetter(NamekianChunkGenerator::getBiomeSource),
-            Codec.LONG.optionalFieldOf("seed", 0L).forGetter(generator -> generator.seed)
+            BiomeSource.CODEC.fieldOf("biome_source").forGetter(NamekianChunkGenerator::getBiomeSource)
     ).apply(instance, instance.stable(NamekianChunkGenerator::new)));
 
     private static final BlockState STONE = Blocks.STONE.defaultBlockState();
@@ -38,11 +37,9 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
     private static final BlockState DIRT = Blocks.DIRT.defaultBlockState();
     private static final BlockState GRASS = Blocks.GRASS_BLOCK.defaultBlockState();
-    private final long seed;
 
-    public NamekianChunkGenerator(BiomeSource biomeSource, long seed) {
+    public NamekianChunkGenerator(BiomeSource biomeSource) {
         super(biomeSource);
-        this.seed = seed;
     }
 
     @Override
@@ -52,7 +49,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     public CompletableFuture<ChunkAccess> fillFromNoise(Executor executor, Blender blender, RandomState randomState, StructureManager structureManager, ChunkAccess chunk) {
         return CompletableFuture.supplyAsync(() -> {
             NamekianDreamsConfig config = NamekianDreamsWorld.CONFIG.validate();
-            NamekianDensitySampler sampler = new NamekianDensitySampler(config, seed);
+            NamekianDensitySampler sampler = new NamekianDensitySampler(config, terrainSeed(randomState));
             ChunkPos chunkPos = chunk.getPos();
             BlockPos.MutableBlockPos pos = new BlockPos.MutableBlockPos();
             for (int localX = 0; localX < 16; localX++) {
@@ -72,6 +69,15 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
         }, executor);
     }
 
+
+    private static long terrainSeed(RandomState randomState) {
+        // RandomState is created from the selected world's seed; this keeps the preset selectable
+        // without baking one literal seed into every generated world.
+        return randomState.getOrCreateRandomFactory(NamekianDreamsWorld.id("terrain_seed"))
+                .fromHashOf("namekian_density")
+                .nextLong();
+    }
+
     private static BlockState stateFor(NamekianDreamsConfig config, NamekianDensitySampler sampler, int x, int y, int z, boolean topAlreadyMarked) {
         if (y <= config.bedrockTopY()) return BEDROCK;
         if (sampler.isSolid(x, y, z)) {
@@ -85,7 +91,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     @Override
     public int getBaseHeight(int x, int z, Heightmap.Types types, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
         NamekianDreamsConfig config = NamekianDreamsWorld.CONFIG.validate();
-        NamekianDensitySampler sampler = new NamekianDensitySampler(config, seed);
+        NamekianDensitySampler sampler = new NamekianDensitySampler(config, terrainSeed(randomState));
         for (int y = config.maxY(); y >= config.minY(); y--) if (sampler.isSolid(x, y, z)) return y + 1;
         return config.minY();
     }
@@ -93,7 +99,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     @Override
     public NoiseColumn getBaseColumn(int x, int z, LevelHeightAccessor levelHeightAccessor, RandomState randomState) {
         NamekianDreamsConfig config = NamekianDreamsWorld.CONFIG.validate();
-        NamekianDensitySampler sampler = new NamekianDensitySampler(config, seed);
+        NamekianDensitySampler sampler = new NamekianDensitySampler(config, terrainSeed(randomState));
         BlockState[] states = new BlockState[config.height()];
         for (int i = 0; i < states.length; i++) {
             int y = config.minY() + i;
@@ -123,7 +129,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     @Override
     public void addDebugScreenInfo(List<String> lines, RandomState randomState, BlockPos pos) {
         NamekianDreamsConfig config = NamekianDreamsWorld.CONFIG.validate();
-        NamekianDensitySampler.DensitySample sample = new NamekianDensitySampler(config, seed).sample(pos.getX(), pos.getY(), pos.getZ());
+        NamekianDensitySampler.DensitySample sample = new NamekianDensitySampler(config, terrainSeed(randomState)).sample(pos.getX(), pos.getY(), pos.getZ());
         lines.add("Namekian density: " + Mth.floor(sample.density() * 1000.0) / 1000.0);
         lines.add("Namekian regime: " + sample.regime());
         lines.add("Namekian range: " + config.minY() + ".." + config.maxY());
