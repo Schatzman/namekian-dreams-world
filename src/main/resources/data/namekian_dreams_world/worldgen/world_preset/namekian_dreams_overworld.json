@@ -1,0 +1,28 @@
+{
+  "dimensions": {
+    "minecraft:overworld": {
+      "type": "namekian_dreams_world:namekian_overworld",
+      "generator": {
+        "type": "namekian_dreams_world:namekian_chunk_generator",
+        "seed": 92837465,
+        "biome_source": { "type": "minecraft:fixed", "biome": "minecraft:plains" }
+      }
+    },
+    "minecraft:the_nether": {
+      "type": "minecraft:the_nether",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": { "type": "minecraft:multi_noise", "preset": "minecraft:nether" },
+        "settings": "minecraft:nether"
+      }
+    },
+    "minecraft:the_end": {
+      "type": "minecraft:the_end",
+      "generator": {
+        "type": "minecraft:noise",
+        "biome_source": { "type": "minecraft:the_end" },
+        "settings": "minecraft:end"
+      }
+    }
+  }
+}

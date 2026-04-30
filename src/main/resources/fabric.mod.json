@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "namekian_dreams_world",
+  "version": "${version}",
+  "name": "Namekian Dreams World",
+  "description": "Explicit Overworld preset with expanded vertical terrain, caves, and default-on fractal density regions.",
+  "authors": ["Governance Nexus"],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": { "main": ["io.github.namekiandreams.NamekianDreamsWorld"] },
+  "depends": {
+    "fabricloader": ">=0.18.4",
+    "minecraft": "1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}
