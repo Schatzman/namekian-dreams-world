@@ -1,6 +1,8 @@
 package io.github.namekiandreams.worldgen;
 
 import io.github.namekiandreams.config.NamekianDreamsConfig;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.level.biome.Biome;
 
 public final class NamekianDensitySampler {
     private static final long BASE_SEED_SALT = 0x4E414D454B49414EL;
@@ -44,6 +46,7 @@ public final class NamekianDensitySampler {
 
     public boolean isSolid(double x, double y, double z) {
         if (y <= config.bedrockTopY()) return true;
+        if (isLavaLake(x, y, z)) return false;
         if (isCaveAir(x, y, z)) return false;
         return sample(x, y, z).density() > 0.0;
     }
@@ -54,6 +57,11 @@ public final class NamekianDensitySampler {
         double buriedDepth = sample.targetHeight() - y;
         if (buriedDepth < 10.0) return false;
         return sample.caveSignal() < -1.15 || shaftSignal(x, z) > 0.82;
+    }
+
+    public boolean isLavaLake(double x, double y, double z) {
+        if (!config.enableLargeLavaLakes() || y <= config.bedrockTopY() + 2 || y >= config.maxY() - 4) return false;
+        return isDeepLavaLake(x, y, z) || isCaveLavaBasin(x, y, z) || isSurfaceLavaLake(x, y, z);
     }
 
     public boolean isOpenWaterColumn(double x, double z) {
@@ -67,7 +75,6 @@ public final class NamekianDensitySampler {
         return config.minY();
     }
 
-
     public BiomeRegion biomeRegion(double x, double y, double z) {
         DensitySample seaSample = sample(x, config.seaLevel(), z);
         double estimatedSurfaceY = seaSample.targetHeight();
@@ -79,10 +86,42 @@ public final class NamekianDensitySampler {
         if (estimatedSurfaceY > 430 || (estimatedSurfaceY > 210 && temperature < -0.22)) return BiomeRegion.FROZEN_PEAKS;
         if (y < config.seaLevel() - 70 && weirdness > 0.38 && humidity < -0.08) return BiomeRegion.DEEP_DARK;
         if (y < config.seaLevel() - 48 && weirdness < -0.34) return BiomeRegion.DRIPSTONE_CAVES;
+        ResourceKey<Biome> selectedBiome = NamekianBiomeClassifier.selectBiomeKey((int) Math.floor(x), (int) Math.floor(y), (int) Math.floor(z));
+        BiomeRegion selectedRegion = NamekianBiomeClassifier.regionForBiomeKey(selectedBiome);
+        if (selectedRegion != BiomeRegion.TEMPERATE) return selectedRegion;
         if (humidity > 0.26 && temperature > -0.02) return BiomeRegion.JUNGLE_LUSH;
         if (temperature < -0.36) return BiomeRegion.FROZEN;
         if (weirdness > 0.46) return BiomeRegion.GRAVELLY;
         return BiomeRegion.TEMPERATE;
+    }
+
+    private boolean isDeepLavaLake(double x, double y, double z) {
+        if (y > config.deepLavaStartY() + config.lavaLakeMaxRadius() / 3.0) return false;
+        double lakeNoise = octave2D(seed + 701, x, z, config.lavaLakeFrequency(), 4, 0.56) * 0.5 + 0.5;
+        if (lakeNoise < config.lavaLakeThreshold()) return false;
+        double strength = (lakeNoise - config.lavaLakeThreshold()) / Math.max(1.0e-6, 1.0 - config.lavaLakeThreshold());
+        int lavaTop = config.deepLavaStartY() + (int) Math.round(strength * config.lavaLakeMaxRadius() * 0.55);
+        int lavaBottom = Math.max(config.bedrockTopY() + 3, lavaTop - config.lavaLakeMaxRadius());
+        return y >= lavaBottom && y <= lavaTop;
+    }
+
+    private boolean isCaveLavaBasin(double x, double y, double z) {
+        if (y > config.seaLevel() - 44 || y < config.bedrockTopY() + 6) return false;
+        DensitySample sample = sample(x, y, z);
+        if (sample.caveSignal() > -0.72 && sample.density() > 0.25) return false;
+        double basin = FieldMath.valueNoise3D(seed + 733, x, y * 0.45, z, config.lavaLakeFrequency() * 2.7) * 0.5 + 0.5;
+        double broad = FieldMath.valueNoise2D(seed + 739, x + 320.0, z - 680.0, config.lavaLakeFrequency() * 0.72) * 0.5 + 0.5;
+        return basin > 0.91 && broad > 0.62;
+    }
+
+    private boolean isSurfaceLavaLake(double x, double y, double z) {
+        if (config.surfaceLavaLakeChance() <= 0.0) return false;
+        DensitySample sample = sample(x, config.seaLevel(), z);
+        if (sample.extremeMask() < 0.58 || sample.targetHeight() < config.seaLevel() + 180.0) return false;
+        double chance = FieldMath.valueNoise2D(seed + 761, x - 1100.0, z + 410.0, config.lavaLakeFrequency() * 1.45) * 0.5 + 0.5;
+        if (chance > config.surfaceLavaLakeChance()) return false;
+        int surface = (int) Math.round(sample.targetHeight());
+        return y >= surface - 5 && y <= surface + 1;
     }
 
     private double caveSignal(double x, double y, double z, double targetHeight) {
@@ -155,7 +194,7 @@ public final class NamekianDensitySampler {
     }
 
     public enum TerrainRegime { NORMAL, AMPLIFIED, EXTREME }
-    public enum BiomeRegion { TEMPERATE, OCEAN, DEEP_OCEAN, FROZEN, FROZEN_PEAKS, JUNGLE_LUSH, DRIPSTONE_CAVES, DEEP_DARK, GRAVELLY }
+    public enum BiomeRegion { TEMPERATE, OCEAN, DEEP_OCEAN, FROZEN, FROZEN_PEAKS, JUNGLE_LUSH, DRIPSTONE_CAVES, DEEP_DARK, GRAVELLY, DARK_FOREST, MUSHROOM_FIELDS, BIRCH_FOREST, CRIMSON_FOREST, WARPED_FOREST, SOUL_SAND_VALLEY }
     public record DensitySample(double density, double caveSignal, double fractalContribution, double amplificationMask,
                                 double extremeMask, double targetHeight, double oceanMask, double basinMask,
                                 TerrainRegime regime) {}

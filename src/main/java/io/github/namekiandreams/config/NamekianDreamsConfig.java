@@ -34,6 +34,12 @@ public record NamekianDreamsConfig(
         int maxSkyLightLevel,
         boolean enableVisualDaylightDimming,
         double visualDaylightMultiplier,
+        boolean enableLargeLavaLakes,
+        double lavaLakeFrequency,
+        double lavaLakeThreshold,
+        int deepLavaStartY,
+        int lavaLakeMaxRadius,
+        double surfaceLavaLakeChance,
         double globalOreMultiplier,
         double globalVeinSizeMultiplier,
         double globalVeinsPerChunkMultiplier,
@@ -53,6 +59,7 @@ public record NamekianDreamsConfig(
                 0.014, 0.64, 0.43, 0.42, 0.0058, 0.00115, 6, 44.0, "high",
                 "#3F9678", "#4FAE8A", "#24584F", "#A7D9BF",
                 true, -5, 10, true, 0.72,
+                true, 0.00115, 0.78, -144, 72, 0.018,
                 2.85, 2.25, 1.75, true, 0.090, 72, 192,
                 true, true, true, true).validate();
     }
@@ -105,6 +112,11 @@ public record NamekianDreamsConfig(
         if (outdoorSkyLightOffset > 0) throw new IllegalArgumentException("outdoor_sky_light_offset must be zero or negative");
         if (maxSkyLightLevel < 0 || maxSkyLightLevel > 15) throw new IllegalArgumentException("max_sky_light_level must be 0..15");
         if (visualDaylightMultiplier <= 0.0 || visualDaylightMultiplier > 1.0) throw new IllegalArgumentException("visual_daylight_multiplier must be >0 and <=1");
+        if (lavaLakeFrequency <= 0.0) throw new IllegalArgumentException("lava_lake_frequency must be positive");
+        if (lavaLakeThreshold < 0.0 || lavaLakeThreshold > 1.0) throw new IllegalArgumentException("lava_lake_threshold must be 0..1");
+        if (deepLavaStartY <= minY || deepLavaStartY >= seaLevel) throw new IllegalArgumentException("deep_lava_start_y must be between min_y and sea_level");
+        if (lavaLakeMaxRadius <= 1) throw new IllegalArgumentException("lava_lake_max_radius must be greater than one");
+        if (surfaceLavaLakeChance < 0.0 || surfaceLavaLakeChance > 1.0) throw new IllegalArgumentException("surface_lava_lake_chance must be 0..1");
         if (globalOreMultiplier <= 0.0 || globalVeinSizeMultiplier <= 0.0 || globalVeinsPerChunkMultiplier <= 0.0) throw new IllegalArgumentException("ore multipliers must be positive");
         if (megaveinRarity < 0.0 || megaveinRarity > 1.0) throw new IllegalArgumentException("megavein_rarity must be 0..1");
         if (megaveinMaxRadius <= 0 || megaveinVerticalSpan <= 0) throw new IllegalArgumentException("megavein dimensions must be positive");
@@ -139,6 +151,12 @@ public record NamekianDreamsConfig(
         p.setProperty("max_sky_light_level", Integer.toString(maxSkyLightLevel));
         p.setProperty("enable_visual_daylight_dimming", Boolean.toString(enableVisualDaylightDimming));
         p.setProperty("visual_daylight_multiplier", Double.toString(visualDaylightMultiplier));
+        p.setProperty("enable_large_lava_lakes", Boolean.toString(enableLargeLavaLakes));
+        p.setProperty("lava_lake_frequency", Double.toString(lavaLakeFrequency));
+        p.setProperty("lava_lake_threshold", Double.toString(lavaLakeThreshold));
+        p.setProperty("deep_lava_start_y", Integer.toString(deepLavaStartY));
+        p.setProperty("lava_lake_max_radius", Integer.toString(lavaLakeMaxRadius));
+        p.setProperty("surface_lava_lake_chance", Double.toString(surfaceLavaLakeChance));
         p.setProperty("global_ore_multiplier", Double.toString(globalOreMultiplier));
         p.setProperty("global_vein_size_multiplier", Double.toString(globalVeinSizeMultiplier));
         p.setProperty("global_veins_per_chunk_multiplier", Double.toString(globalVeinsPerChunkMultiplier));
@@ -167,7 +185,10 @@ public record NamekianDreamsConfig(
                 p.getProperty("water_fog_color", "#24584F"), p.getProperty("cloud_color", "#A7D9BF"),
                 booleanValue(p, "enable_actual_sky_light_offset", true), intValue(p, "outdoor_sky_light_offset", -5),
                 intValue(p, "max_sky_light_level", 10), booleanValue(p, "enable_visual_daylight_dimming", true),
-                doubleValue(p, "visual_daylight_multiplier", 0.72), doubleValue(p, "global_ore_multiplier", 2.85),
+                doubleValue(p, "visual_daylight_multiplier", 0.72), booleanValue(p, "enable_large_lava_lakes", true),
+                doubleValue(p, "lava_lake_frequency", 0.00115), doubleValue(p, "lava_lake_threshold", 0.78),
+                intValue(p, "deep_lava_start_y", -144), intValue(p, "lava_lake_max_radius", 72),
+                doubleValue(p, "surface_lava_lake_chance", 0.018), doubleValue(p, "global_ore_multiplier", 2.85),
                 doubleValue(p, "global_vein_size_multiplier", 2.25), doubleValue(p, "global_veins_per_chunk_multiplier", 1.75),
                 booleanValue(p, "enable_megaveins", true), doubleValue(p, "megavein_rarity", 0.090),
                 intValue(p, "megavein_max_radius", 72), intValue(p, "megavein_vertical_span", 192),

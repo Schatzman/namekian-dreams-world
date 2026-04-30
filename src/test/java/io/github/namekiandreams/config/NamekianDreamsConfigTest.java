@@ -25,6 +25,9 @@ class NamekianDreamsConfigTest {
         assertEquals(-5, config.outdoorSkyLightOffset());
         assertEquals(10, config.maxSkyLightLevel());
         assertTrue(config.enableVisualDaylightDimming());
+        assertTrue(config.enableLargeLavaLakes());
+        assertEquals(-144, config.deepLavaStartY());
+        assertTrue(config.lavaLakeMaxRadius() > 1);
         assertTrue(config.enableMegaveins());
         assertTrue(config.globalOreMultiplier() > 1.0);
     }
@@ -39,7 +42,9 @@ class NamekianDreamsConfigTest {
                 config.fractalRegionFrequency(), config.fractalQuality(), config.domainWarpStrength(),
                 config.performanceQualityPreset(), config.skyColor(), config.fogColor(), config.waterFogColor(), config.cloudColor(),
                 config.enableActualSkyLightOffset(), config.outdoorSkyLightOffset(), config.maxSkyLightLevel(),
-                config.enableVisualDaylightDimming(), config.visualDaylightMultiplier(), config.globalOreMultiplier(),
+                config.enableVisualDaylightDimming(), config.visualDaylightMultiplier(), config.enableLargeLavaLakes(),
+                config.lavaLakeFrequency(), config.lavaLakeThreshold(), config.deepLavaStartY(), config.lavaLakeMaxRadius(),
+                config.surfaceLavaLakeChance(), config.globalOreMultiplier(),
                 config.globalVeinSizeMultiplier(), config.globalVeinsPerChunkMultiplier(), config.enableMegaveins(),
                 config.megaveinRarity(), config.megaveinMaxRadius(), config.megaveinVerticalSpan(),
                 config.allowOresAboveVanillaHeight(), config.allowOresBelowVanillaDepth(), config.allowHighMountainOres(),

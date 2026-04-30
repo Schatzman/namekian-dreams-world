@@ -41,8 +41,8 @@ class NamekianDensitySamplerTest {
                 "src/main/resources/data/namekian_dreams_world/worldgen/world_preset/namekian_dreams_overworld.json"));
 
         assertTrue(preset.contains("namekian_dreams_world:namekian_chunk_generator"));
-        assertTrue(preset.contains("minecraft:overworld"));
-        assertTrue(preset.contains("minecraft:multi_noise"));
+        assertTrue(preset.contains("namekian_dreams_world:namekian_biome_source"));
+        assertTrue(preset.contains("minecraft:crimson_forest"));
         assertTrue(!preset.contains("minecraft:fixed"));
         assertTrue(!preset.contains("\"seed\""));
     }
@@ -54,6 +54,10 @@ class NamekianDensitySamplerTest {
         assertTrue(result.oceanCoordinate() != null, result.toReport());
         assertTrue(result.mountainCoordinate() != null, result.toReport());
         assertTrue(result.caveCoordinate() != null, result.toReport());
+        assertTrue(result.lavaLakeCoordinate() != null, result.toReport());
+        assertTrue(result.crimsonForestCoordinate() != null, result.toReport());
+        assertTrue(result.warpedForestCoordinate() != null, result.toReport());
+        assertTrue(result.soulSandValleyCoordinate() != null, result.toReport());
         assertTrue(result.highColumns() > 0 && result.lowColumns() > 0 && result.midColumns() > 0, result.toReport());
     }
 

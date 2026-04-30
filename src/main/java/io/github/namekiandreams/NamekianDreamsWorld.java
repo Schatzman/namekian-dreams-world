@@ -1,6 +1,7 @@
 package io.github.namekiandreams;
 
 import io.github.namekiandreams.config.NamekianDreamsConfig;
+import io.github.namekiandreams.worldgen.NamekianBiomeSource;
 import io.github.namekiandreams.worldgen.NamekianChunkGenerator;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
@@ -22,6 +23,7 @@ public final class NamekianDreamsWorld implements ModInitializer {
     @Override
     public void onInitialize() {
         CONFIG = NamekianDreamsConfig.load(FabricLoader.getInstance().getConfigDir());
+        Registry.register(BuiltInRegistries.BIOME_SOURCE, id("namekian_biome_source"), NamekianBiomeSource.CODEC);
         Registry.register(BuiltInRegistries.CHUNK_GENERATOR, id("namekian_chunk_generator"), NamekianChunkGenerator.CODEC);
         LOGGER.info("Loaded Namekian Dreams World config: min_y={}, height={}, max_y={}, fractal_strength={}",
                 CONFIG.minY(), CONFIG.height(), CONFIG.maxY(), CONFIG.fractalStrength());

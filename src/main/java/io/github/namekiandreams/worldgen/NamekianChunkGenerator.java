@@ -35,6 +35,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     private static final BlockState DEEPSLATE = Blocks.DEEPSLATE.defaultBlockState();
     private static final BlockState BEDROCK = Blocks.BEDROCK.defaultBlockState();
     private static final BlockState WATER = Blocks.WATER.defaultBlockState();
+    private static final BlockState LAVA = Blocks.LAVA.defaultBlockState();
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
     private static final BlockState DIRT = Blocks.DIRT.defaultBlockState();
     private static final BlockState GRASS = Blocks.GRASS_BLOCK.defaultBlockState();
@@ -49,6 +50,13 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     private static final BlockState CALCITE = Blocks.CALCITE.defaultBlockState();
     private static final BlockState SCULK = Blocks.SCULK.defaultBlockState();
     private static final BlockState TUFF = Blocks.TUFF.defaultBlockState();
+    private static final BlockState PODZOL = Blocks.PODZOL.defaultBlockState();
+    private static final BlockState MYCELIUM = Blocks.MYCELIUM.defaultBlockState();
+    private static final BlockState CRIMSON_NYLIUM = Blocks.CRIMSON_NYLIUM.defaultBlockState();
+    private static final BlockState WARPED_NYLIUM = Blocks.WARPED_NYLIUM.defaultBlockState();
+    private static final BlockState NETHERRACK = Blocks.NETHERRACK.defaultBlockState();
+    private static final BlockState SOUL_SAND = Blocks.SOUL_SAND.defaultBlockState();
+    private static final BlockState SOUL_SOIL = Blocks.SOUL_SOIL.defaultBlockState();
 
     public NamekianChunkGenerator(BiomeSource biomeSource) {
         super(biomeSource);
@@ -94,6 +102,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
 
     private static BlockState stateFor(NamekianDreamsConfig config, NamekianDensitySampler sampler, NamekianOreSampler oreSampler, int x, int y, int z, boolean topAlreadyMarked) {
         if (y <= config.bedrockTopY()) return BEDROCK;
+        if (sampler.isLavaLake(x, y, z)) return LAVA;
         if (sampler.isCaveAir(x, y, z)) return AIR;
         if (sampler.isSolid(x, y, z)) {
             NamekianDensitySampler.BiomeRegion region = sampler.biomeRegion(x, y, z);
@@ -122,6 +131,12 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
             case DRIPSTONE_CAVES -> DRIPSTONE;
             case DEEP_DARK -> SCULK;
             case GRAVELLY -> GRAVEL;
+            case DARK_FOREST -> PODZOL;
+            case MUSHROOM_FIELDS -> MYCELIUM;
+            case BIRCH_FOREST -> y > config.seaLevel() - 6 ? GRASS : DIRT;
+            case CRIMSON_FOREST -> CRIMSON_NYLIUM;
+            case WARPED_FOREST -> WARPED_NYLIUM;
+            case SOUL_SAND_VALLEY -> SOUL_SAND;
             case TEMPERATE -> y > config.seaLevel() - 6 ? GRASS : DIRT;
         };
     }
@@ -131,6 +146,10 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
             case JUNGLE_LUSH -> MUD;
             case FROZEN, FROZEN_PEAKS -> DIRT;
             case OCEAN, DEEP_OCEAN, GRAVELLY -> GRAVEL;
+            case DARK_FOREST -> PODZOL;
+            case MUSHROOM_FIELDS -> MYCELIUM;
+            case CRIMSON_FOREST, WARPED_FOREST -> NETHERRACK;
+            case SOUL_SAND_VALLEY -> SOUL_SOIL;
             default -> DIRT;
         };
     }
@@ -143,6 +162,11 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
             case DRIPSTONE_CAVES -> noise > 0.28 ? DRIPSTONE : noise < -0.50 ? CALCITE : null;
             case DEEP_DARK -> noise > 0.40 ? SCULK : noise < -0.42 ? TUFF : null;
             case FROZEN, FROZEN_PEAKS -> noise > 0.58 ? PACKED_ICE : null;
+            case DARK_FOREST -> noise > 0.54 ? PODZOL : null;
+            case MUSHROOM_FIELDS -> noise > 0.35 ? MYCELIUM : null;
+            case CRIMSON_FOREST -> noise > -0.10 ? CRIMSON_NYLIUM : NETHERRACK;
+            case WARPED_FOREST -> noise > -0.10 ? WARPED_NYLIUM : NETHERRACK;
+            case SOUL_SAND_VALLEY -> noise > 0.05 ? SOUL_SAND : SOUL_SOIL;
             default -> null;
         };
     }
@@ -201,6 +225,7 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
         lines.add("Namekian regime: " + sample.regime());
         lines.add("Namekian range: " + config.minY() + ".." + config.maxY());
         lines.add("Namekian daylight offset: " + config.outdoorSkyLightOffset() + " max=" + config.maxSkyLightLevel());
+        lines.add("Namekian lava lakes: enabled=" + config.enableLargeLavaLakes() + " start_y=" + config.deepLavaStartY() + " threshold=" + config.lavaLakeThreshold());
         lines.add("Namekian ores: multiplier=" + config.globalOreMultiplier() + " megaveins=" + config.enableMegaveins());
     }
 }
