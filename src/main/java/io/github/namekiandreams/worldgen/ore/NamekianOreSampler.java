@@ -41,7 +41,35 @@ public final class NamekianOreSampler {
     }
 
     public boolean isMegaveinCandidate(int x, int y, int z) {
-        return config.enableMegaveins() && megaveinDensity(x, y, z) > 0.86;
+        return config.enableMegaveins() && megaveinDensity(x, y, z) > 0.74;
+    }
+
+    public MegaveinLode megaveinLodeAt(int x, int y, int z) {
+        if (!config.enableMegaveins() || !isAllowedHeight(y)) return null;
+        MegaveinLode best = null;
+        int cellX = Math.floorDiv(x, MEGAVEIN_CELL);
+        int cellY = Math.floorDiv(y, config.megaveinVerticalSpan());
+        int cellZ = Math.floorDiv(z, MEGAVEIN_CELL);
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    int cx = cellX + dx, cy = cellY + dy, cz = cellZ + dz;
+                    if (normalized(seed + 5001L, cx, cy, cz) > config.megaveinRarity() * config.globalVeinsPerChunkMultiplier()) continue;
+                    double centerX = cx * MEGAVEIN_CELL + 16.0 + normalized(seed + 5003L, cx, cy, cz) * 96.0;
+                    double centerY = cy * config.megaveinVerticalSpan() + 16.0 + normalized(seed + 5009L, cx, cy, cz) * (config.megaveinVerticalSpan() - 32.0);
+                    double centerZ = cz * MEGAVEIN_CELL + 16.0 + normalized(seed + 5011L, cx, cy, cz) * 96.0;
+                    double rx = config.megaveinMaxRadius() * (0.58 + normalized(seed + 5021L, cx, cy, cz) * 0.70);
+                    double ry = config.megaveinVerticalSpan() * (0.30 + normalized(seed + 5023L, cx, cy, cz) * 0.44);
+                    double rz = config.megaveinMaxRadius() * (0.58 + normalized(seed + 5027L, cx, cy, cz) * 0.70);
+                    double density = megaveinDensityForLode(x, y, z, centerX, centerY, centerZ, rx, ry, rz);
+                    if (best == null || density > best.density()) {
+                        best = new MegaveinLode((int) Math.round(centerX), (int) Math.round(centerY), (int) Math.round(centerZ),
+                                (int) Math.round(rx), (int) Math.round(ry), (int) Math.round(rz), density, oreSignalForY(y));
+                    }
+                }
+            }
+        }
+        return best;
     }
 
     public double distributionWeight(NamekianOreConfig.OreBand band, int x, int y, int z) {
@@ -65,7 +93,7 @@ public final class NamekianOreSampler {
         return Optional.of(base.is(Blocks.DEEPSLATE) ? Blocks.DEEPSLATE_COPPER_ORE.defaultBlockState() : Blocks.COPPER_ORE.defaultBlockState());
     }
 
-    private double megaveinDensity(int x, int y, int z) {
+    public double megaveinDensity(int x, int y, int z) {
         if (!isAllowedHeight(y)) return 0.0;
         double best = 0.0;
         int cellX = Math.floorDiv(x, MEGAVEIN_CELL);
@@ -79,20 +107,32 @@ public final class NamekianOreSampler {
                     double centerX = cx * MEGAVEIN_CELL + 16.0 + normalized(seed + 5003L, cx, cy, cz) * 96.0;
                     double centerY = cy * config.megaveinVerticalSpan() + 16.0 + normalized(seed + 5009L, cx, cy, cz) * (config.megaveinVerticalSpan() - 32.0);
                     double centerZ = cz * MEGAVEIN_CELL + 16.0 + normalized(seed + 5011L, cx, cy, cz) * 96.0;
-                    double rx = config.megaveinMaxRadius() * (0.45 + normalized(seed + 5021L, cx, cy, cz) * 0.55);
-                    double ry = config.megaveinVerticalSpan() * (0.25 + normalized(seed + 5023L, cx, cy, cz) * 0.35);
-                    double rz = config.megaveinMaxRadius() * (0.45 + normalized(seed + 5027L, cx, cy, cz) * 0.55);
-                    double warp = FieldMath.valueNoise3D(seed + 5039L, x, y, z, 0.025) * 9.0;
-                    double nx = (x + warp - centerX) / rx;
-                    double ny = (y - centerY) / ry;
-                    double nz = (z - warp - centerZ) / rz;
-                    double ellipsoid = 1.0 - (nx * nx + ny * ny + nz * nz);
-                    double branch = Math.abs(FieldMath.valueNoise3D(seed + 5051L, x, y, z, 0.055));
-                    best = Math.max(best, ellipsoid + branch * 0.42);
+                    double rx = config.megaveinMaxRadius() * (0.58 + normalized(seed + 5021L, cx, cy, cz) * 0.70);
+                    double ry = config.megaveinVerticalSpan() * (0.30 + normalized(seed + 5023L, cx, cy, cz) * 0.44);
+                    double rz = config.megaveinMaxRadius() * (0.58 + normalized(seed + 5027L, cx, cy, cz) * 0.70);
+                    best = Math.max(best, megaveinDensityForLode(x, y, z, centerX, centerY, centerZ, rx, ry, rz));
                 }
             }
         }
         return best;
+    }
+
+
+    private double megaveinDensityForLode(int x, int y, int z, double centerX, double centerY, double centerZ, double rx, double ry, double rz) {
+        double warp = FieldMath.valueNoise3D(seed + 5039L, x, y, z, 0.025) * 12.0;
+        double nx = (x + warp - centerX) / rx;
+        double ny = (y - centerY) / ry;
+        double nz = (z - warp - centerZ) / rz;
+        double ellipsoid = 1.0 - (nx * nx + ny * ny + nz * nz);
+        double branch = Math.abs(FieldMath.valueNoise3D(seed + 5051L, x, y, z, 0.055));
+        return ellipsoid + branch * 0.46;
+    }
+
+    private static String oreSignalForY(int y) {
+        if (y < -96) return "diamond_lode";
+        if (y < 48) return "gold_lode";
+        if (y > 220) return "emerald_lode";
+        return "copper_lode";
     }
 
     private boolean bandAllowedAtHeight(NamekianOreConfig.OreBand band, int y) {
@@ -116,5 +156,11 @@ public final class NamekianOreSampler {
 
     static double normalized(long seed, int x, int y, int z) {
         return (FieldMath.signedHashNoise(seed, x, y, z) + 1.0) * 0.5;
+    }
+
+    public record MegaveinLode(int centerX, int centerY, int centerZ, int radiusX, int radiusY, int radiusZ, double density, String oreSignal) {
+        public String summary() {
+            return "center=(" + centerX + "," + centerY + "," + centerZ + ") radii=(" + radiusX + "," + radiusY + "," + radiusZ + ") density=" + Math.round(density * 1000.0) / 1000.0 + " signal=" + oreSignal;
+        }
     }
 }

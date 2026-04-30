@@ -49,7 +49,7 @@ public record NamekianDreamsConfig(
     public static final String FILE_NAME = "namekian_dreams_world.properties";
 
     public static NamekianDreamsConfig defaults() {
-        return new NamekianDreamsConfig(-304, 1328, 63, 118.0, 360.0, 820.0, 0.00072,
+        return new NamekianDreamsConfig(-304, 1328, 0, 118.0, 360.0, 820.0, 0.00072,
                 0.014, 0.64, 0.43, 0.42, 0.0058, 0.00115, 6, 44.0, "high",
                 "#3F9678", "#4FAE8A", "#24584F", "#A7D9BF",
                 true, -5, 10, true, 0.72,
@@ -155,7 +155,7 @@ public record NamekianDreamsConfig(
 
     public static NamekianDreamsConfig fromProperties(Properties p) {
         return new NamekianDreamsConfig(
-                intValue(p, "min_y", -304), intValue(p, "height", 1328), intValue(p, "sea_level", 63),
+                intValue(p, "min_y", -304), intValue(p, "height", 1328), intValue(p, "sea_level", 0),
                 doubleValue(p, "normal_amplitude", 118.0), doubleValue(p, "amplified_amplitude", 360.0),
                 doubleValue(p, "extreme_amplitude", 820.0), doubleValue(p, "amplification_mask_frequency", 0.00072),
                 doubleValue(p, "cave_frequency", 0.014), doubleValue(p, "cave_amplitude", 0.64),

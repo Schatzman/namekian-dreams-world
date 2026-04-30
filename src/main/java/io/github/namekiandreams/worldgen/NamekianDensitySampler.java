@@ -19,9 +19,11 @@ public final class NamekianDensitySampler {
         double wz = z + warpZ;
         double continent = octave2D(seed + 101, wx, wz, 0.00042, 4, 0.55);
         double uplift = FieldMath.smoothstep(-0.48, 0.82, continent);
-        double oceanMask = FieldMath.smoothstep(-0.18, -0.62, continent);
-        double basinMask = FieldMath.smoothstep(0.52, 0.94,
-                (octave2D(seed + 137, wx - 700.0, wz + 350.0, 0.00105, 3, 0.54) * 0.5 + 0.5)) * oceanMask;
+        double oceanMask = FieldMath.smoothstep(-0.08, -0.54, continent);
+        double basinNoise = octave2D(seed + 137, wx - 700.0, wz + 350.0, 0.00082, 4, 0.54) * 0.5 + 0.5;
+        double trenchNoise = octave2D(seed + 139, wx + 1200.0, wz - 800.0, 0.00155, 3, 0.50) * 0.5 + 0.5;
+        double basinMask = FieldMath.smoothstep(0.34, 0.88, basinNoise) * oceanMask;
+        double abyssMask = FieldMath.smoothstep(0.72, 0.96, trenchNoise) * basinMask;
         double amplificationMask = FieldMath.smoothstep(0.08, 0.92,
                 octave2D(seed + 151, wx, wz, config.amplificationMaskFrequency(), 3, 0.50) * 0.5 + 0.5);
         double extremeMask = FieldMath.smoothstep(0.58, 0.94, amplificationMask);
@@ -31,8 +33,8 @@ public final class NamekianDensitySampler {
         double ridges = Math.pow(1.0 - FieldMath.clamp(mountain, 0.0, 1.0), 2.05);
         double ridgeLift = ridges * amplitude * (0.46 + extremeMask * 0.28);
         double detail = octave2D(seed + 307, wx, wz, 0.012, 4, 0.48) * 22.0;
-        double basinCut = (oceanMask * 86.0) + (basinMask * 70.0);
-        double targetHeight = config.seaLevel() - 18.0 + uplift * amplitude + ridgeLift + detail - basinCut;
+        double basinCut = (oceanMask * 118.0) + (basinMask * 154.0) + (abyssMask * 104.0);
+        double targetHeight = config.seaLevel() - 10.0 + uplift * amplitude + ridgeLift + detail - basinCut;
         double verticalDensity = (targetHeight - y) / 56.0;
         double caveSignal = caveSignal(wx, y, wz, targetHeight);
         double fractal = fractalContribution(wx, y, wz, extremeMask);
@@ -63,6 +65,24 @@ public final class NamekianDensitySampler {
             if (isSolid(x, y, z)) return y;
         }
         return config.minY();
+    }
+
+
+    public BiomeRegion biomeRegion(double x, double y, double z) {
+        DensitySample seaSample = sample(x, config.seaLevel(), z);
+        double estimatedSurfaceY = seaSample.targetHeight();
+        if (estimatedSurfaceY <= config.seaLevel() - 205 || seaSample.basinMask() > 0.70) return BiomeRegion.DEEP_OCEAN;
+        if (estimatedSurfaceY <= config.seaLevel() - 8 || seaSample.oceanMask() > 0.72) return BiomeRegion.OCEAN;
+        double temperature = octave2D(seed + 601, x + 900.0, z - 400.0, 0.00095, 3, 0.55);
+        double humidity = octave2D(seed + 607, x - 300.0, z + 1100.0, 0.00105, 3, 0.52);
+        double weirdness = octave2D(seed + 613, x + 1700.0, z + 700.0, 0.00135, 3, 0.50);
+        if (estimatedSurfaceY > 430 || (estimatedSurfaceY > 210 && temperature < -0.22)) return BiomeRegion.FROZEN_PEAKS;
+        if (y < config.seaLevel() - 70 && weirdness > 0.38 && humidity < -0.08) return BiomeRegion.DEEP_DARK;
+        if (y < config.seaLevel() - 48 && weirdness < -0.34) return BiomeRegion.DRIPSTONE_CAVES;
+        if (humidity > 0.26 && temperature > -0.02) return BiomeRegion.JUNGLE_LUSH;
+        if (temperature < -0.36) return BiomeRegion.FROZEN;
+        if (weirdness > 0.46) return BiomeRegion.GRAVELLY;
+        return BiomeRegion.TEMPERATE;
     }
 
     private double caveSignal(double x, double y, double z, double targetHeight) {
@@ -135,6 +155,7 @@ public final class NamekianDensitySampler {
     }
 
     public enum TerrainRegime { NORMAL, AMPLIFIED, EXTREME }
+    public enum BiomeRegion { TEMPERATE, OCEAN, DEEP_OCEAN, FROZEN, FROZEN_PEAKS, JUNGLE_LUSH, DRIPSTONE_CAVES, DEEP_DARK, GRAVELLY }
     public record DensitySample(double density, double caveSignal, double fractalContribution, double amplificationMask,
                                 double extremeMask, double targetHeight, double oceanMask, double basinMask,
                                 TerrainRegime regime) {}

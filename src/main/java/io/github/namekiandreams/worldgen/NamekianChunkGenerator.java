@@ -38,6 +38,17 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
     private static final BlockState AIR = Blocks.AIR.defaultBlockState();
     private static final BlockState DIRT = Blocks.DIRT.defaultBlockState();
     private static final BlockState GRASS = Blocks.GRASS_BLOCK.defaultBlockState();
+    private static final BlockState GRAVEL = Blocks.GRAVEL.defaultBlockState();
+    private static final BlockState SAND = Blocks.SAND.defaultBlockState();
+    private static final BlockState SNOW_BLOCK = Blocks.SNOW_BLOCK.defaultBlockState();
+    private static final BlockState ICE = Blocks.ICE.defaultBlockState();
+    private static final BlockState PACKED_ICE = Blocks.PACKED_ICE.defaultBlockState();
+    private static final BlockState MOSS = Blocks.MOSS_BLOCK.defaultBlockState();
+    private static final BlockState MUD = Blocks.MUD.defaultBlockState();
+    private static final BlockState DRIPSTONE = Blocks.DRIPSTONE_BLOCK.defaultBlockState();
+    private static final BlockState CALCITE = Blocks.CALCITE.defaultBlockState();
+    private static final BlockState SCULK = Blocks.SCULK.defaultBlockState();
+    private static final BlockState TUFF = Blocks.TUFF.defaultBlockState();
 
     public NamekianChunkGenerator(BiomeSource biomeSource) {
         super(biomeSource);
@@ -85,12 +96,61 @@ public final class NamekianChunkGenerator extends ChunkGenerator {
         if (y <= config.bedrockTopY()) return BEDROCK;
         if (sampler.isCaveAir(x, y, z)) return AIR;
         if (sampler.isSolid(x, y, z)) {
-            if (!topAlreadyMarked && y > config.seaLevel() - 6) return GRASS;
-            if (y > config.seaLevel() - 12 && y < config.seaLevel() + 24) return DIRT;
+            NamekianDensitySampler.BiomeRegion region = sampler.biomeRegion(x, y, z);
+            if (!topAlreadyMarked) return surfaceBlockFor(region, y, x, z, config);
+            if (y > config.seaLevel() - 10 && y < config.seaLevel() + 26) return nearSurfaceBlockFor(region);
+            BlockState decorative = deepBiomeBlockFor(region, x, y, z, config);
+            if (decorative != null) return decorative;
             BlockState base = y < -64 ? DEEPSLATE : STONE;
             return oreSampler.replaceIfOre(base, x, y, z);
         }
         return y <= config.seaLevel() ? WATER : AIR;
+    }
+
+    public static BlockState diagnosticStateFor(NamekianDreamsConfig config, long seed, int x, int y, int z) {
+        NamekianDensitySampler sampler = new NamekianDensitySampler(config, seed);
+        NamekianOreSampler oreSampler = new NamekianOreSampler(config, seed);
+        return stateFor(config, sampler, oreSampler, x, y, z, y < config.maxY() && sampler.isSolid(x, y + 1, z));
+    }
+
+    private static BlockState surfaceBlockFor(NamekianDensitySampler.BiomeRegion region, int y, int x, int z, NamekianDreamsConfig config) {
+        return switch (region) {
+            case DEEP_OCEAN -> deepOceanFloorNoise(x, z) > 0.35 ? GRAVEL : DEEPSLATE;
+            case OCEAN -> deepOceanFloorNoise(x, z) > -0.20 ? GRAVEL : SAND;
+            case FROZEN, FROZEN_PEAKS -> y <= config.seaLevel() ? PACKED_ICE : (deepOceanFloorNoise(x, z) > 0.55 ? ICE : SNOW_BLOCK);
+            case JUNGLE_LUSH -> MOSS;
+            case DRIPSTONE_CAVES -> DRIPSTONE;
+            case DEEP_DARK -> SCULK;
+            case GRAVELLY -> GRAVEL;
+            case TEMPERATE -> y > config.seaLevel() - 6 ? GRASS : DIRT;
+        };
+    }
+
+    private static BlockState nearSurfaceBlockFor(NamekianDensitySampler.BiomeRegion region) {
+        return switch (region) {
+            case JUNGLE_LUSH -> MUD;
+            case FROZEN, FROZEN_PEAKS -> DIRT;
+            case OCEAN, DEEP_OCEAN, GRAVELLY -> GRAVEL;
+            default -> DIRT;
+        };
+    }
+
+    private static BlockState deepBiomeBlockFor(NamekianDensitySampler.BiomeRegion region, int x, int y, int z, NamekianDreamsConfig config) {
+        if (y > config.seaLevel() - 36) return null;
+        double noise = FieldMath.valueNoise3D(0x4E414D4542494F4DL, x, y, z, 0.085);
+        return switch (region) {
+            case JUNGLE_LUSH -> noise > 0.50 ? MOSS : noise < -0.56 ? CLAY() : null;
+            case DRIPSTONE_CAVES -> noise > 0.28 ? DRIPSTONE : noise < -0.50 ? CALCITE : null;
+            case DEEP_DARK -> noise > 0.40 ? SCULK : noise < -0.42 ? TUFF : null;
+            case FROZEN, FROZEN_PEAKS -> noise > 0.58 ? PACKED_ICE : null;
+            default -> null;
+        };
+    }
+
+    private static BlockState CLAY() { return Blocks.CLAY.defaultBlockState(); }
+
+    private static double deepOceanFloorNoise(int x, int z) {
+        return FieldMath.valueNoise2D(0x4E414D454F43454EL, x, z, 0.035);
     }
 
     @Override

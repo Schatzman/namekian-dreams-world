@@ -12,6 +12,7 @@ class NamekianDreamsConfigTest {
         assertEquals(-304, config.minY());
         assertEquals(1328, config.height());
         assertEquals(1023, config.maxY());
+        assertEquals(0, config.seaLevel());
         assertEquals(-300, config.bedrockTopY());
     }
     @Test
