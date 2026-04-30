@@ -3,7 +3,13 @@
   "package": "io.github.namekiandreams.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
-    "NamekianBrightnessMixin"
+    "NamekianBrightnessMixin",
+    "EntityNamekianFindDimensionEntryMixin",
+    "EntityPortalEntranceAccessor",
+    "EntityPortalMixin",
+    "ItemEntityMixin",
+    "ServerPlayerDimensionMixin",
+    "ServerPlayerNamekianPortalMixin"
   ],
   "client": [
     "NamekianClientAtmosphereMixin",

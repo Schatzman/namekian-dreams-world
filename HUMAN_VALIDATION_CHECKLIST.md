@@ -25,3 +25,14 @@ Use a local Fabric 1.20.1 test client with this mod jar installed. The coordinat
 21. High ore check: teleport to `/tp @p -4096 370 1024`. Expected: actual generated `minecraft:emerald_ore` in high terrain above vanilla build height.
 22. Megavein/lode check: teleport to `/tp @p -3904 333 -3904`. Expected: visible ore-rich lode, not a void candidate. Diagnostic metadata: `cluster_ore_blocks=729`, lode `center=(-3907,308,-3895)`, `radii=(63,107,84)`, `density=1.165`, `signal=emerald_lode`.
 23. Record client observations with screenshots and coordinates for any mismatch, especially F3 `Sky Light`, F3 `Client Light`, sky color, water fog, lava lake breadth, biome/F3 mismatch, structure frequency, ocean basin, deep floor, biome-region blocks, or ore-rich lode.
+
+## Portal validation
+
+1. Create or load a normal Overworld save with this mod installed; confirm the selectable `Namekian Dreams World` Overworld preset is still available as a separate entry path.
+2. Build an emerald-block portal frame with Nether-like proportions, for example a 4x5 outer rectangle with a 2x3 interior.
+3. Drop or throw a `minecraft:fire_charge` through or near the empty frame interior. Expected: the charge is consumed and the interior fills with `namekian_dreams_world:namekian_portal`.
+4. Confirm the portal visual is Namekian green, approximately `#077563`.
+5. Stand in the portal until vanilla portal timing completes. Expected: travel from `minecraft:overworld` to `namekian_dreams_world:namekian_dreams` at the same X/Z coordinates, with no 8:1 compression.
+6. Confirm destination terrain uses the Namekian generator features from `./gradlew diagnoseFields` / `./gradlew diagnoseOres`, and that landing is not stranded in void or unsupported air.
+7. Use the destination portal to return. Expected: travel back to `minecraft:overworld` at the same coordinate scale and with a matching emerald portal created/found if needed.
+8. Future migration note: Minecraft 1.20.1 has no vanilla wind charge, so portal activation intentionally uses `minecraft:fire_charge`; 1.21+ can add `minecraft:wind_charge` in `NamekianPortalActivation`.

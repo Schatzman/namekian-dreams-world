@@ -1,0 +1,6 @@
+{
+  "variants": {
+    "axis=x": { "model": "namekian_dreams_world:block/namekian_portal_ew" },
+    "axis=z": { "model": "namekian_dreams_world:block/namekian_portal_ns" }
+  }
+}

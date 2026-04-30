@@ -36,3 +36,9 @@ Vanilla 1.20.1 structure-set shapes were inspected before overriding. `data/mine
 ## Ore Generation
 
 `NamekianChunkGenerator` replaces eligible generated stone/deepslate with deterministic ores from `NamekianOreSampler` across `min_y=-304` to `max_y=1023`. Defaults are deliberately rich: broad coal/iron, mid/high copper, deep-rich gold/redstone/lapis/diamond, high-mountain emerald, and default-on rare megavein/lode fields bounded by deterministic warped ellipsoid sampling. `diagnoseOres` proves actual ore blocks in generated solid terrain and reports lode metadata for visible inspection.
+
+## Namekian portal
+
+The mod also defines `namekian_dreams_world:namekian_dreams` as a separate dimension that reuses the Namekian chunk generator and biome source while preserving the selectable Overworld preset. Travel uses a custom emerald-block portal (`namekian_dreams_world:namekian_portal`) with color `#077563`, vanilla Nether-like rectangular frame limits, and 1:1 coordinate scale from the Overworld.
+
+Activate a valid emerald frame with a dropped/thrown `minecraft:fire_charge`. Minecraft 1.20.1 does not include vanilla wind charges; a future 1.21+ migration can swap or extend `NamekianPortalActivation` to accept `minecraft:wind_charge` while keeping the frame and travel code unchanged.

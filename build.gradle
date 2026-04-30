@@ -56,3 +56,11 @@ tasks.register('diagnoseOres', JavaExec) {
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'io.github.namekiandreams.worldgen.ore.OreDiagnostics'
 }
+
+
+tasks.register('diagnosePortal', JavaExec) {
+    group = 'verification'
+    description = 'Validates Namekian portal resources, frame examples, activation item, and coordinate scale.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'io.github.namekiandreams.portal.PortalDiagnostics'
+}

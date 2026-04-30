@@ -2,16 +2,20 @@ package io.github.namekiandreams.client;
 
 import io.github.namekiandreams.NamekianDreamsWorld;
 import io.github.namekiandreams.config.NamekianDreamsConfig;
+import io.github.namekiandreams.init.ModBlocks;
 import io.github.namekiandreams.worldgen.light.NamekianDaylightOffset;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.rendering.v1.DimensionRenderingRegistry;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.Vec3;
 
 public final class NamekianDreamsWorldClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
         DimensionRenderingRegistry.registerDimensionEffects(NamekianDreamsWorld.id("namekian_overworld"), new NamekianDimensionEffects());
+        BlockRenderLayerMap.INSTANCE.putBlock(ModBlocks.NAMEKIAN_PORTAL, RenderType.translucent());
     }
 
     private static final class NamekianDimensionEffects extends DimensionSpecialEffects {
